@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "cn.edu.campus.jufe.electricity",
+  "name": "江财寝室电费",
+  "version": "1.0.0",
+  "versionCode": 1,
+  "description": "江财官方微信缴费直连 · 默认寝室实时余电与充值记录",
+  "iconGlyph": "电",
+  "accent": "SCORE",
+  "category": "utility",
+  "author": "CampusHub",
+  "schools": ["江西财经大学"],
+  "runtime": "dsl-v1",
+  "hostApiMin": 1,
+  "hostApiMax": 1,
+  "requiredCapabilities": [
+    "http.https",
+    "storage.scoped",
+    "card.glance",
+    "detail.v1",
+    "runtime.dsl.v1"
+  ],
+  "allowedHosts": ["wxcourse.jxufe.cn"],
+  "permissions": [
+    "直连 wxcourse.jxufe.cn（HTTPS 只读查询）",
+    "本地加密保存学号与默认寝室配置"
+  ],
+  "capabilities": [
+    "首页默认寝室实时余电卡片",
+    "在线校验寝室绑定关系",
+    "详情页余电概况与最近充值流水"
+  ],
+  "cards": [
+    {
+      "id": "jufe_electricity_card",
+      "title": "寝室电量",
+      "iconGlyph": "电",
+      "accent": "SCORE",
+      "defaultSize": "EXPANDED_2X1",
+      "supportedSizes": ["COMPACT_1X1", "EXPANDED_2X1", "TALL_1X2"],
+      "defaultVisible": true
+    }
+  ]
+}

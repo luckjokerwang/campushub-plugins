@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "registryId": "official.campushub",
+  "name": "CampusHub 官方插件源",
+  "updatedAt": "2026-11-23T03:32:02Z",
+  "minHostApi": 1,
+  "keyId": "campushub-plugin-ecdsa-2026-v1",
+  "plugins": [
+    {
+      "id": "cn.edu.campus.jufe.electricity",
+      "name": "江财寝室电费",
+      "version": "1.0.0",
+      "versionCode": 1,
+      "category": "utility",
+      "schools": [
+        "江西财经大学"
+      ],
+      "author": "CampusHub",
+      "description": "江财官方微信缴费直连 · 默认寝室实时余电与充值记录",
+      "iconGlyph": "电",
+      "accent": "SCORE",
+      "runtime": "dsl-v1",
+      "hostApiMin": 1,
+      "hostApiMax": 1,
+      "requiredCapabilities": [
+        "http.https",
+        "storage.scoped",
+        "card.glance",
+        "detail.v1",
+        "runtime.dsl.v1"
+      ],
+      "permissions": [
+        "直连 wxcourse.jxufe.cn（HTTPS 只读查询）",
+        "本地加密保存学号与默认寝室配置"
+      ],
+      "allowedHosts": [
+        "wxcourse.jxufe.cn"
+      ],
+      "trustTier": "official",
+      "sizeBytes": 7383,
+      "sha256": "3ced11cefcd4031cf257ce7154e0e9717c798e660006b0ecb48f36eb2f078631",
+      "signature": "MEUCIQCdoi5MlDuNmVVkb8EkfjHL7zZeLi9SbZr7yphsK/Eu0QIgOTCz2ALaaUGkLUE3JkSFMv9/JNRdFe8fEcUWOEcse3k=",
+      "packageUrls": [
+        "https://cdn.jsdelivr.net/gh/luckjokerwang/campushub-plugins@main/dist/jufe-electricity.chpkg",
+        "https://fastly.jsdelivr.net/gh/luckjokerwang/campushub-plugins@main/dist/jufe-electricity.chpkg",
+        "https://raw.githubusercontent.com/luckjokerwang/campushub-plugins/main/dist/jufe-electricity.chpkg"
+      ],
+      "changelog": null
+    }
+  ]
+}

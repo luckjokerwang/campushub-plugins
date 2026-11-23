@@ -1,0 +1,183 @@
+{
+  "dslVersion": 1,
+  "configGroups": [
+    {
+      "id": "room",
+      "label": "默认寝室配置",
+      "submitLabel": "校验并设为默认寝室",
+      "hint": "仅直连江财官方微信缴费接口（wxcourse.jxufe.cn），无需密码。房间 ID 需已在「智慧江财」电费小程序内绑定。",
+      "requiredKeys": ["username", "roomId"],
+      "fields": [
+        {
+          "key": "username",
+          "label": "学号",
+          "type": "TEXT",
+          "required": true,
+          "placeholder": "请输入学号，如 22024xxxxx"
+        },
+        {
+          "key": "roomId",
+          "label": "房间 ID",
+          "type": "TEXT",
+          "required": true,
+          "placeholder": "如 101（对应智慧江财电费小程序已绑定房间）"
+        },
+        {
+          "key": "roomName",
+          "label": "寝室备注名",
+          "type": "TEXT",
+          "required": false,
+          "placeholder": "可选，如 麦庐北区 1 栋 6 层"
+        }
+      ],
+      "onSubmit": {
+        "mode": "http",
+        "request": {
+          "method": "GET",
+          "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:form.username}}&roomId={{url:form.roomId}}",
+          "headers": {
+            "User-Agent": "Mozilla/5.0"
+          }
+        },
+        "businessErrorRule": {
+          "jsonPath": "code",
+          "successValues": ["1"],
+          "messagePath": "message",
+          "defaultMessage": "未查询到房间电费信息，请核对学号与房间 ID"
+        },
+        "saveFormKeys": ["username", "roomId", "roomName"],
+        "extractToStorage": {
+          "roomNo": "{{res.result.roomNo}}",
+          "unit": "{{res.result.unit}}"
+        },
+        "successMessage": "已校验并设为默认寝室"
+      }
+    }
+  ],
+  "glances": {
+    "jufe_electricity_card": {
+      "requiresGroupId": "room",
+      "unboundSub": "点击配置学号与默认寝室",
+      "request": {
+        "method": "GET",
+        "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:storage.username}}&roomId={{url:storage.roomId}}",
+        "headers": {
+          "User-Agent": "Mozilla/5.0"
+        }
+      },
+      "businessErrorRule": {
+        "jsonPath": "code",
+        "successValues": ["1"],
+        "messagePath": "message",
+        "defaultMessage": "寝室余电查询失败"
+      },
+      "title": "寝室电量",
+      "chip": "{{storage.roomName|res.result.roomNo}}",
+      "readout": "{{res.result.balance}}",
+      "readoutUnit": "度",
+      "sub": "房间号 {{res.result.roomNo}} · 官方直连",
+      "details": [
+        {
+          "label": "默认寝室",
+          "value": "{{storage.roomName|res.result.roomNo}}"
+        },
+        {
+          "label": "房间编号",
+          "value": "{{res.result.roomNo}}"
+        }
+      ],
+      "state": "IDLE",
+      "tapPageId": "overview"
+    }
+  },
+  "detailPages": [
+    {
+      "id": "overview",
+      "title": "寝室电量",
+      "navLabel": "概况",
+      "navIcon": "OVERVIEW",
+      "requiresGroupId": "room",
+      "note": "数据实时直连江财官方微信缴费接口（wxcourse.jxufe.cn），如需更换默认寝室请在插件配置页修改。",
+      "request": {
+        "method": "GET",
+        "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:storage.username}}&roomId={{url:storage.roomId}}",
+        "headers": {
+          "User-Agent": "Mozilla/5.0"
+        }
+      },
+      "businessErrorRule": {
+        "jsonPath": "code",
+        "successValues": ["1"],
+        "messagePath": "message",
+        "defaultMessage": "寝室余电查询失败"
+      },
+      "sections": [
+        {
+          "type": "kpi",
+          "items": [
+            {
+              "label": "当前剩余电量",
+              "value": "{{res.result.balance}}",
+              "unit": "度"
+            },
+            {
+              "label": "房间编号",
+              "value": "{{res.result.roomNo}}"
+            }
+          ]
+        },
+        {
+          "type": "records",
+          "title": "默认寝室信息",
+          "rows": [
+            {
+              "id": "room_name",
+              "title": "默认寝室：{{storage.roomName|res.result.roomNo}}",
+              "sub": "房间 ID：{{storage.roomId}}"
+            },
+            {
+              "id": "source_info",
+              "title": "数据来源：wxcourse.jxufe.cn",
+              "sub": "官方只读 HTTPS 接口（无需密码）",
+              "badge": "官方直连",
+              "badgeTone": "POSITIVE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "records",
+      "title": "充值记录",
+      "navLabel": "流水",
+      "navIcon": "STATS",
+      "requiresGroupId": "room",
+      "request": {
+        "method": "GET",
+        "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomChargesRecord?username={{url:storage.username}}&roomId={{url:storage.roomId}}&pageNum=1&pageSize=10",
+        "headers": {
+          "User-Agent": "Mozilla/5.0"
+        }
+      },
+      "businessErrorRule": {
+        "jsonPath": "code",
+        "successValues": ["1"],
+        "messagePath": "message",
+        "defaultMessage": "充值记录查询失败"
+      },
+      "sections": [
+        {
+          "type": "records",
+          "title": "最近充值记录",
+          "listPath": "result.data",
+          "rowIdPath": "id",
+          "titleTemplate": "{{res.remark}}",
+          "subTemplate": "订单 {{res.orderNo}} · {{res.createTime}}",
+          "badgeTemplate": "{{res.payTypeName|res.payType}}",
+          "badgeTone": "POSITIVE",
+          "emptyText": "暂无充值记录"
+        }
+      ]
+    }
+  ]
+}
