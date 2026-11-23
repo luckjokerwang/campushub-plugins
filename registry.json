@@ -2,21 +2,21 @@
   "schemaVersion": 2,
   "registryId": "official.campushub",
   "name": "CampusHub 官方插件源",
-  "updatedAt": "2026-11-23T03:32:02Z",
+  "updatedAt": "2026-11-23T15:15:33Z",
   "minHostApi": 1,
   "keyId": "campushub-plugin-ecdsa-2026-v1",
   "plugins": [
     {
       "id": "cn.edu.campus.jufe.electricity",
       "name": "江财寝室电费",
-      "version": "1.0.0",
-      "versionCode": 1,
+      "version": "1.1.0",
+      "versionCode": 2,
       "category": "utility",
       "schools": [
         "江西财经大学"
       ],
       "author": "CampusHub",
-      "description": "江财官方微信缴费直连 · 默认寝室实时余电与充值记录",
+      "description": "江财官方直连 · 仅填学号自动匹配寝室 · 多寝室只读管理与低电预警",
       "iconGlyph": "电",
       "accent": "SCORE",
       "runtime": "dsl-v1",
@@ -27,25 +27,30 @@
         "storage.scoped",
         "card.glance",
         "detail.v1",
-        "runtime.dsl.v1"
+        "runtime.dsl.v1",
+        "dsl.steps.v1",
+        "dsl.profiles.v1",
+        "alert.threshold.v1"
       ],
       "permissions": [
-        "直连 wxcourse.jxufe.cn（HTTPS 只读查询）",
-        "本地加密保存学号与默认寝室配置"
+        "直连 wxcourse.jxufe.cn / wxcourse.jxufe.edu.cn（HTTPS 只读查询）",
+        "本地加密保存学号与多寝室档案",
+        "低电量通知栏或系统闹钟提醒（可选）"
       ],
       "allowedHosts": [
-        "wxcourse.jxufe.cn"
+        "wxcourse.jxufe.cn",
+        "wxcourse.jxufe.edu.cn"
       ],
       "trustTier": "official",
-      "sizeBytes": 7383,
-      "sha256": "3ced11cefcd4031cf257ce7154e0e9717c798e660006b0ecb48f36eb2f078631",
-      "signature": "MEUCIQCdoi5MlDuNmVVkb8EkfjHL7zZeLi9SbZr7yphsK/Eu0QIgOTCz2ALaaUGkLUE3JkSFMv9/JNRdFe8fEcUWOEcse3k=",
+      "sizeBytes": 19532,
+      "sha256": "d5ad80a7518c29d26317857677febc8c467bdaeb7537881485548ae23e17a8ce",
+      "signature": "MEYCIQCyRWHCOS/QkmAGd1KdiAMrzcP5xoeJuVPG9VbtC1IVSgIhAOkho3ZCHES1+ODzhRaTaKSDj2O7uhVvBg4zpJNFASgA",
       "packageUrls": [
         "https://cdn.jsdelivr.net/gh/luckjokerwang/campushub-plugins@main/dist/jufe-electricity.chpkg",
         "https://fastly.jsdelivr.net/gh/luckjokerwang/campushub-plugins@main/dist/jufe-electricity.chpkg",
         "https://raw.githubusercontent.com/luckjokerwang/campushub-plugins/main/dist/jufe-electricity.chpkg"
       ],
-      "changelog": null
+      "changelog": "1. 仅输入学号自动匹配已绑定寝室，告别手动查房间 ID；2. 支持多寝室只读管理与首页下拉快切；3. 默认 5 度低电量通知/闹钟预警与后台巡检；4. 充值记录转北京时间并优化金额与概况页展示。"
     }
   ]
 }

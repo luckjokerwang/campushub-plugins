@@ -3,61 +3,161 @@
   "configGroups": [
     {
       "id": "room",
-      "label": "默认寝室配置",
-      "submitLabel": "校验并设为默认寝室",
-      "hint": "仅直连江财官方微信缴费接口（wxcourse.jxufe.cn），无需密码。房间 ID 需已在「智慧江财」电费小程序内绑定。",
-      "requiredKeys": ["username", "roomId"],
+      "label": "寝室绑定",
+      "submitLabel": "自动匹配并添加",
+      "hint": "只需填写「学号」即可自动匹配你在智慧江财电费小程序绑定的默认寝室，其余均为选填；支持添加多个学号（如室友/朋友）分别查看多个寝室，全链路只读且无需密码。",
+      "requiredKeys": [
+        "username",
+        "roomId"
+      ],
       "fields": [
         {
           "key": "username",
           "label": "学号",
           "type": "TEXT",
           "required": true,
-          "placeholder": "请输入学号，如 22024xxxxx"
-        },
-        {
-          "key": "roomId",
-          "label": "房间 ID",
-          "type": "TEXT",
-          "required": true,
-          "placeholder": "如 101（对应智慧江财电费小程序已绑定房间）"
+          "placeholder": "输入学号，如 22024xxxxx"
         },
         {
           "key": "roomName",
-          "label": "寝室备注名",
+          "label": "寝室备注名（选填）",
           "type": "TEXT",
           "required": false,
-          "placeholder": "可选，如 麦庐北区 1 栋 6 层"
+          "placeholder": "留空则自动使用官方宿舍全称"
+        },
+        {
+          "key": "alert_threshold",
+          "label": "低电预警阈值（选填，默认 5 度）",
+          "type": "TEXT",
+          "required": false,
+          "placeholder": "默认 5，如 5 / 10 / 20"
         }
       ],
       "onSubmit": {
         "mode": "http",
-        "request": {
-          "method": "GET",
-          "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:form.username}}&roomId={{url:form.roomId}}",
-          "headers": {
-            "User-Agent": "Mozilla/5.0"
+        "steps": [
+          {
+            "method": "GET",
+            "url": "https://wxcourse.jxufe.edu.cn/platForm/api/littleProgram/organizationUser/getUserIdByPlatformUsername?platformUsername={{url:form.username}}&scanCode=",
+            "headers": {
+              "User-Agent": "Mozilla/5.0"
+            },
+            "businessErrorRule": {
+              "jsonPath": "code",
+              "successValues": [
+                "1"
+              ],
+              "messagePath": "message",
+              "defaultMessage": "学号查询失败，请核对学号是否正确"
+            },
+            "requirePath": "result.username",
+            "requireErrorMessage": "未查到该学号，请核对学号是否正确",
+            "extractVars": {
+              "userId": "{{res.result.username}}"
+            }
+          },
+          {
+            "method": "GET",
+            "url": "https://wxcourse.jxufe.cn/electricity_charges/room/findUserBindedRoom?userId={{url:userId}}&username={{url:form.username}}",
+            "headers": {
+              "User-Agent": "Mozilla/5.0"
+            },
+            "businessErrorRule": {
+              "jsonPath": "code",
+              "successValues": [
+                "1"
+              ],
+              "messagePath": "message",
+              "defaultMessage": "未查询到绑定寝室信息"
+            },
+            "requirePath": "result.id",
+            "requireErrorMessage": "该学号尚未在「智慧江财」电费小程序绑定寝室，请先在微信绑定一次",
+            "extractVars": {
+              "roomId": "{{res.result.id}}",
+              "longName": "{{res.result.longName}}",
+              "campus": "{{res.result.campus}}",
+              "buildingName": "{{res.result.buildingName}}",
+              "floorName": "{{res.result.floorName}}"
+            }
+          },
+          {
+            "method": "GET",
+            "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:form.username}}&roomId={{url:roomId}}",
+            "headers": {
+              "User-Agent": "Mozilla/5.0"
+            },
+            "businessErrorRule": {
+              "jsonPath": "code",
+              "successValues": [
+                "1"
+              ],
+              "messagePath": "message",
+              "defaultMessage": "余电接口校验失败，请确认该学号已在智慧江财绑定寝室"
+            },
+            "extractVars": {
+              "roomNo": "{{res.result.roomNo}}",
+              "unit": "{{res.result.unit}}"
+            }
           }
-        },
-        "businessErrorRule": {
-          "jsonPath": "code",
-          "successValues": ["1"],
-          "messagePath": "message",
-          "defaultMessage": "未查询到房间电费信息，请核对学号与房间 ID"
-        },
-        "saveFormKeys": ["username", "roomId", "roomName"],
+        ],
+        "saveFormKeys": [
+          "username",
+          "roomName",
+          "alert_threshold"
+        ],
         "extractToStorage": {
-          "roomNo": "{{res.result.roomNo}}",
-          "unit": "{{res.result.unit}}"
+          "userId": "{{userId}}",
+          "roomId": "{{roomId}}",
+          "longName": "{{longName}}",
+          "campus": "{{campus}}",
+          "buildingName": "{{buildingName}}",
+          "floorName": "{{floorName}}",
+          "roomNo": "{{res.result.roomNo|roomNo}}",
+          "unit": "{{res.result.unit|unit}}"
         },
-        "successMessage": "已校验并设为默认寝室"
+        "successMessage": "已自动匹配寝室并完成绑定"
       }
     }
   ],
+  "profiles": {
+    "groupId": "room",
+    "keyField": "username",
+    "labelField": "roomName",
+    "labelTemplate": "{{roomName|longName|roomNo}}",
+    "subTemplate": "{{longName}} · 学号 {{username}}",
+    "switcherTitle": "切换默认寝室",
+    "maxCount": 10,
+    "glanceRequest": {
+      "method": "GET",
+      "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:storage.username}}&roomId={{url:storage.roomId}}",
+      "headers": {
+        "User-Agent": "Mozilla/5.0"
+      }
+    },
+    "glanceValueTemplate": "{{res.result.balance}} 度",
+    "glanceNumericPath": "result.balance",
+    "businessErrorRule": {
+      "jsonPath": "code",
+      "successValues": [
+        "1"
+      ],
+      "messagePath": "message",
+      "defaultMessage": "该寝室余电查询失败"
+    }
+  },
+  "thresholdAlert": {
+    "metricLabel": "寝室余电",
+    "unit": "度",
+    "defaultThreshold": 5.0,
+    "defaultMode": "notification",
+    "defaultCheckIntervalHours": 6,
+    "numericPath": "result.balance",
+    "cooldownHours": 12
+  },
   "glances": {
     "jufe_electricity_card": {
       "requiresGroupId": "room",
-      "unboundSub": "点击配置学号与默认寝室",
+      "unboundSub": "只需输入学号，自动匹配默认寝室",
       "request": {
         "method": "GET",
         "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:storage.username}}&roomId={{url:storage.roomId}}",
@@ -67,23 +167,43 @@
       },
       "businessErrorRule": {
         "jsonPath": "code",
-        "successValues": ["1"],
+        "successValues": [
+          "1"
+        ],
         "messagePath": "message",
         "defaultMessage": "寝室余电查询失败"
       },
       "title": "寝室电量",
-      "chip": "{{storage.roomName|res.result.roomNo}}",
+      "chip": "{{storage.roomName|storage.buildingName|res.result.roomNo}}",
+      "lowStateChip": "低电 ≤{{alertThreshold}}度",
       "readout": "{{res.result.balance}}",
       "readoutUnit": "度",
-      "sub": "房间号 {{res.result.roomNo}} · 官方直连",
+      "sub": "{{storage.longName|res.result.roomNo}} · 官方直连",
+      "lowStateSub": "电量低于 {{alertThreshold}} 度，请及时充值 · {{storage.longName|res.result.roomNo}}",
       "details": [
         {
-          "label": "默认寝室",
-          "value": "{{storage.roomName|res.result.roomNo}}"
+          "label": "宿舍",
+          "value": "{{storage.roomName|storage.longName|res.result.roomNo}}"
         },
         {
-          "label": "房间编号",
+          "label": "电表号",
           "value": "{{res.result.roomNo}}"
+        },
+        {
+          "label": "位置",
+          "value": "{{storage.campus|'-'}} {{storage.buildingName}}"
+        },
+        {
+          "label": "预警阈值",
+          "value": "≤ {{alertThreshold}} 度"
+        },
+        {
+          "label": "提醒方式",
+          "value": "{{alertModeLabel}}"
+        },
+        {
+          "label": "已管寝室",
+          "value": "共 {{profileCount}} 间"
         }
       ],
       "state": "IDLE",
@@ -97,48 +217,119 @@
       "navLabel": "概况",
       "navIcon": "OVERVIEW",
       "requiresGroupId": "room",
-      "note": "数据实时直连江财官方微信缴费接口（wxcourse.jxufe.cn），如需更换默认寝室请在插件配置页修改。",
-      "request": {
-        "method": "GET",
-        "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:storage.username}}&roomId={{url:storage.roomId}}",
-        "headers": {
-          "User-Agent": "Mozilla/5.0"
+      "headerAction": {
+        "label": "添加寝室",
+        "commandId": "profile.add",
+        "style": "PRIMARY"
+      },
+      "note": "数据直连江财官方微信缴费接口（wxcourse.jxufe.cn / wxcourse.jxufe.edu.cn），全链路只读、无需密码；点击列表任意寝室可设默认、改备注或删除。",
+      "steps": [
+        {
+          "method": "GET",
+          "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:storage.username}}&roomId={{url:storage.roomId}}",
+          "headers": {
+            "User-Agent": "Mozilla/5.0"
+          },
+          "businessErrorRule": {
+            "jsonPath": "code",
+            "successValues": [
+              "1"
+            ],
+            "messagePath": "message",
+            "defaultMessage": "寝室余电查询失败"
+          },
+          "extractVars": {
+            "balance": "{{res.result.balance}}",
+            "roomNo": "{{res.result.roomNo}}"
+          }
+        },
+        {
+          "method": "GET",
+          "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomChargesRecord?username={{url:storage.username}}&roomId={{url:storage.roomId}}&pageNum=1&pageSize=10",
+          "headers": {
+            "User-Agent": "Mozilla/5.0"
+          },
+          "optional": true,
+          "extractVars": {
+            "lastChargeMoney": "{{cents:res.result.data.0.money}}",
+            "lastChargeTime": "{{date_cn:res.result.data.0.createTime}}",
+            "lastChargePayType": "{{res.result.data.0.payTypeName|res.result.data.0.payType}}",
+            "allCount": "{{res.result.allCount}}"
+          },
+          "extractArrayCentsSum": {
+            "recentChargeTotal": "result.data.*.money"
+          },
+          "extractArrayCount": {
+            "recentChargeCount": "result.data"
+          }
         }
-      },
-      "businessErrorRule": {
-        "jsonPath": "code",
-        "successValues": ["1"],
-        "messagePath": "message",
-        "defaultMessage": "寝室余电查询失败"
-      },
+      ],
       "sections": [
         {
           "type": "kpi",
+          "highlight": {
+            "chip": "{{storage.roomName|storage.buildingName|'当前寝室'}} · {{alertStatusLabel}}",
+            "lowChip": "电量偏低 · 低于 {{alertThreshold}} 度",
+            "readout": "{{res.result.balance|balance}}",
+            "unit": "度",
+            "side": [
+              {
+                "label": "位置",
+                "value": "{{storage.longName|res.result.roomNo}}"
+              },
+              {
+                "label": "预警",
+                "value": "≤ {{alertThreshold}} 度 · {{alertModeLabel}}"
+              }
+            ]
+          },
           "items": [
             {
-              "label": "当前剩余电量",
-              "value": "{{res.result.balance}}",
-              "unit": "度"
+              "label": "最近充值",
+              "value": "¥{{lastChargeMoney|'—'}}",
+              "unit": "{{lastChargeTime|'暂无记录'}}"
             },
             {
-              "label": "房间编号",
-              "value": "{{res.result.roomNo}}"
+              "label": "近 10 笔累计",
+              "value": "¥{{recentChargeTotal|'0.00'}}",
+              "unit": "共 {{allCount|'0'}} 笔"
+            },
+            {
+              "label": "电表编号",
+              "value": "{{res.result.roomNo|roomNo}}",
+              "unit": "房间 ID {{storage.roomId}}"
+            },
+            {
+              "label": "后台巡检",
+              "value": "{{alertIntervalLabel}}",
+              "unit": "{{alertModeLabel}}"
             }
           ]
         },
         {
           "type": "records",
-          "title": "默认寝室信息",
+          "title": "全部寝室实时余电",
+          "source": "profiles",
+          "emptyText": "暂未添加寝室"
+        },
+        {
+          "type": "records",
+          "title": "当前寝室档案",
           "rows": [
             {
-              "id": "room_name",
-              "title": "默认寝室：{{storage.roomName|res.result.roomNo}}",
-              "sub": "房间 ID：{{storage.roomId}}"
+              "id": "dorm_location",
+              "title": "{{storage.longName|storage.roomName|res.result.roomNo}}",
+              "sub": "校区：{{storage.campus|'未知'}} · 楼栋：{{storage.buildingName|'-'}} · 学号：{{storage.username}}"
+            },
+            {
+              "id": "last_channel",
+              "title": "最近充值方式：{{lastChargePayType|'暂无充值记录'}}",
+              "sub": "近 10 笔合计 ¥{{recentChargeTotal|'0.00'}}（累计 {{allCount|'0'}} 笔）"
             },
             {
               "id": "source_info",
-              "title": "数据来源：wxcourse.jxufe.cn",
-              "sub": "官方只读 HTTPS 接口（无需密码）",
+              "title": "官方只读 HTTPS 直连",
+              "sub": "wxcourse.jxufe.cn · 无需密码与学校授权",
               "badge": "官方直连",
               "badgeTone": "POSITIVE"
             }
@@ -152,30 +343,194 @@
       "navLabel": "流水",
       "navIcon": "STATS",
       "requiresGroupId": "room",
-      "request": {
-        "method": "GET",
-        "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomChargesRecord?username={{url:storage.username}}&roomId={{url:storage.roomId}}&pageNum=1&pageSize=10",
-        "headers": {
-          "User-Agent": "Mozilla/5.0"
+      "steps": [
+        {
+          "method": "GET",
+          "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomChargesRecord?username={{url:storage.username}}&roomId={{url:storage.roomId}}&pageNum=1&pageSize=20",
+          "headers": {
+            "User-Agent": "Mozilla/5.0"
+          },
+          "businessErrorRule": {
+            "jsonPath": "code",
+            "successValues": [
+              "1"
+            ],
+            "messagePath": "message",
+            "defaultMessage": "充值记录查询失败"
+          },
+          "extractArrayCentsSum": {
+            "recentChargeTotal": "result.data.*.money"
+          },
+          "extractVars": {
+            "allCount": "{{res.result.allCount}}"
+          }
         }
-      },
-      "businessErrorRule": {
-        "jsonPath": "code",
-        "successValues": ["1"],
-        "messagePath": "message",
-        "defaultMessage": "充值记录查询失败"
-      },
+      ],
       "sections": [
         {
+          "type": "kpi",
+          "items": [
+            {
+              "label": "近 20 笔合计",
+              "value": "¥{{recentChargeTotal|'0.00'}}",
+              "unit": "北京时间"
+            },
+            {
+              "label": "历史总笔数",
+              "value": "{{allCount|'0'}}",
+              "unit": "笔"
+            }
+          ]
+        },
+        {
           "type": "records",
-          "title": "最近充值记录",
+          "title": "充值流水明细",
           "listPath": "result.data",
           "rowIdPath": "id",
           "titleTemplate": "{{res.remark}}",
-          "subTemplate": "订单 {{res.orderNo}} · {{res.createTime}}",
+          "subTemplate": "{{datetime_cn:res.createTime}} · 订单 {{res.orderNo}}",
+          "amountTemplate": "+¥{{cents:res.money}}",
+          "tone": "IN",
           "badgeTemplate": "{{res.payTypeName|res.payType}}",
           "badgeTone": "POSITIVE",
           "emptyText": "暂无充值记录"
+        }
+      ]
+    },
+    {
+      "id": "manage",
+      "title": "寝室与预警",
+      "navLabel": "管理",
+      "navIcon": "DEVICES",
+      "requiresGroupId": "room",
+      "headerAction": {
+        "label": "添加寝室",
+        "commandId": "profile.add",
+        "style": "PRIMARY"
+      },
+      "note": "低电通知与系统闹钟依赖系统通知权限；如需 App 在后台自动定时查电，请把 CampusHub 加入电池优化白名单。",
+      "sections": [
+        {
+          "type": "records",
+          "title": "已添加寝室（点击切换 / 改备注 / 删除）",
+          "source": "profiles",
+          "emptyText": "暂未添加寝室，点击右上角「添加寝室」"
+        },
+        {
+          "type": "form",
+          "title": "低电量提醒设置",
+          "fields": [
+            {
+              "key": "alert_mode",
+              "label": "提醒方式",
+              "type": "SELECT",
+              "options": [
+                {
+                  "label": "仅卡片标红",
+                  "value": "off"
+                },
+                {
+                  "label": "通知栏提醒",
+                  "value": "notification"
+                },
+                {
+                  "label": "系统闹钟响铃",
+                  "value": "alarm"
+                }
+              ]
+            },
+            {
+              "key": "alert_threshold",
+              "label": "低电预警阈值",
+              "type": "SELECT",
+              "options": [
+                {
+                  "label": "3 度",
+                  "value": "3"
+                },
+                {
+                  "label": "5 度（默认）",
+                  "value": "5"
+                },
+                {
+                  "label": "10 度",
+                  "value": "10"
+                },
+                {
+                  "label": "15 度",
+                  "value": "15"
+                },
+                {
+                  "label": "20 度",
+                  "value": "20"
+                },
+                {
+                  "label": "30 度",
+                  "value": "30"
+                },
+                {
+                  "label": "50 度",
+                  "value": "50"
+                }
+              ]
+            },
+            {
+              "key": "alert_check_interval",
+              "label": "后台巡检频率",
+              "type": "SELECT",
+              "options": [
+                {
+                  "label": "仅打开 App 时",
+                  "value": "0"
+                },
+                {
+                  "label": "每 6 小时",
+                  "value": "6"
+                },
+                {
+                  "label": "每 12 小时",
+                  "value": "12"
+                },
+                {
+                  "label": "每天一次",
+                  "value": "24"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "records",
+          "title": "自定义阈值与权限",
+          "rows": [
+            {
+              "id": "custom_threshold",
+              "title": "自定义低电阈值",
+              "sub": "当前阈值：{{alertThreshold}} 度（点击可输入 0.1～500 任意度数）",
+              "badge": "{{alertThreshold}} 度",
+              "actions": [
+                {
+                  "id": "alert.set_threshold",
+                  "label": "输入自定义度数",
+                  "kind": "PROMPT_TEXT",
+                  "prompt": "低电阈值（度）"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "records",
+          "title": "权限检查",
+          "source": "alert_permissions",
+          "emptyText": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "测试提醒",
+          "commandId": "alert.test",
+          "style": "SECONDARY"
         }
       ]
     }
