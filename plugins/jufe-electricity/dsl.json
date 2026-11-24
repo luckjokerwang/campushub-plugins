@@ -4,8 +4,8 @@
     {
       "id": "room",
       "label": "寝室绑定",
-      "submitLabel": "自动匹配并添加",
-      "hint": "只需填写「学号」即可自动匹配你在智慧江财电费小程序绑定的默认寝室，其余均为选填；支持添加多个学号（如室友/朋友）分别查看多个寝室，全链路只读且无需密码。",
+      "submitLabel": "校验并添加寝室",
+      "hint": "填写学号并依次选择「校区 → 楼栋 → 楼层 → 房间号」即可自动匹配电表，无需密码与代理，也无需记忆后台房间 ID。所选房间须已在微信「智慧江财 → 电费充值」中与该学号绑定。",
       "requiredKeys": [
         "username",
         "roomId"
@@ -19,11 +19,122 @@
           "placeholder": "输入学号，如 22024xxxxx"
         },
         {
+          "key": "campusId",
+          "label": "校区",
+          "type": "SEARCH_SELECT",
+          "required": true,
+          "placeholder": "点击选择校区",
+          "optionsSource": {
+            "request": {
+              "method": "GET",
+              "url": "https://wxcourse.jxufe.cn/electricity_charges/room/findCampusList",
+              "headers": {
+                "User-Agent": "Mozilla/5.0"
+              }
+            },
+            "businessErrorRule": {
+              "jsonPath": "code",
+              "successValues": [
+                "1"
+              ],
+              "messagePath": "message",
+              "defaultMessage": "校区列表加载失败"
+            },
+            "listPath": "result",
+            "valuePath": "id",
+            "labelPath": "campus"
+          }
+        },
+        {
+          "key": "buildingId",
+          "label": "楼栋",
+          "type": "SEARCH_SELECT",
+          "required": true,
+          "dependsOn": "campusId",
+          "placeholder": "点击选择楼栋",
+          "optionsSource": {
+            "request": {
+              "method": "GET",
+              "url": "https://wxcourse.jxufe.cn/electricity_charges/room/findBuildingList?campusId={{url:form.campusId}}",
+              "headers": {
+                "User-Agent": "Mozilla/5.0"
+              }
+            },
+            "businessErrorRule": {
+              "jsonPath": "code",
+              "successValues": [
+                "1"
+              ],
+              "messagePath": "message",
+              "defaultMessage": "楼栋列表加载失败"
+            },
+            "listPath": "result",
+            "valuePath": "id",
+            "labelPath": "name"
+          }
+        },
+        {
+          "key": "floorId",
+          "label": "楼层",
+          "type": "SEARCH_SELECT",
+          "required": true,
+          "dependsOn": "buildingId",
+          "placeholder": "点击选择楼层",
+          "optionsSource": {
+            "request": {
+              "method": "GET",
+              "url": "https://wxcourse.jxufe.cn/electricity_charges/room/findFloorListByBuilding?buildingId={{url:form.buildingId}}",
+              "headers": {
+                "User-Agent": "Mozilla/5.0"
+              }
+            },
+            "businessErrorRule": {
+              "jsonPath": "code",
+              "successValues": [
+                "1"
+              ],
+              "messagePath": "message",
+              "defaultMessage": "楼层列表加载失败"
+            },
+            "listPath": "result",
+            "valuePath": "id",
+            "labelPath": "name"
+          }
+        },
+        {
+          "key": "roomId",
+          "label": "房间号",
+          "type": "SEARCH_SELECT",
+          "required": true,
+          "dependsOn": "floorId",
+          "placeholder": "点击选择房间门牌号（如 01609）",
+          "optionsSource": {
+            "request": {
+              "method": "GET",
+              "url": "https://wxcourse.jxufe.cn/electricity_charges/room/findRoomListByFloor?floorId={{url:form.floorId}}",
+              "headers": {
+                "User-Agent": "Mozilla/5.0"
+              }
+            },
+            "businessErrorRule": {
+              "jsonPath": "code",
+              "successValues": [
+                "1"
+              ],
+              "messagePath": "message",
+              "defaultMessage": "房间列表加载失败"
+            },
+            "listPath": "result",
+            "valuePath": "id",
+            "labelPath": "name"
+          }
+        },
+        {
           "key": "roomName",
           "label": "寝室备注名（选填）",
           "type": "TEXT",
           "required": false,
-          "placeholder": "留空则自动使用官方宿舍全称"
+          "placeholder": "留空则自动使用所选宿舍名称"
         },
         {
           "key": "alert_threshold",
@@ -38,7 +149,7 @@
         "steps": [
           {
             "method": "GET",
-            "url": "https://wxcourse.jxufe.edu.cn/platForm/api/littleProgram/organizationUser/getUserIdByPlatformUsername?platformUsername={{url:form.username}}&scanCode=",
+            "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:form.username}}&roomId={{url:form.roomId}}",
             "headers": {
               "User-Agent": "Mozilla/5.0"
             },
@@ -48,51 +159,7 @@
                 "1"
               ],
               "messagePath": "message",
-              "defaultMessage": "学号查询失败，请核对学号是否正确"
-            },
-            "requirePath": "result.username",
-            "requireErrorMessage": "未查到该学号，请核对学号是否正确",
-            "extractVars": {
-              "userId": "{{res.result.username}}"
-            }
-          },
-          {
-            "method": "GET",
-            "url": "https://wxcourse.jxufe.cn/electricity_charges/room/findUserBindedRoom?userId={{url:userId}}&username={{url:form.username}}",
-            "headers": {
-              "User-Agent": "Mozilla/5.0"
-            },
-            "businessErrorRule": {
-              "jsonPath": "code",
-              "successValues": [
-                "1"
-              ],
-              "messagePath": "message",
-              "defaultMessage": "未查询到绑定寝室信息"
-            },
-            "requirePath": "result.id",
-            "requireErrorMessage": "该学号尚未在「智慧江财」电费小程序绑定寝室，请先在微信绑定一次",
-            "extractVars": {
-              "roomId": "{{res.result.id}}",
-              "longName": "{{res.result.longName}}",
-              "campus": "{{res.result.campus}}",
-              "buildingName": "{{res.result.buildingName}}",
-              "floorName": "{{res.result.floorName}}"
-            }
-          },
-          {
-            "method": "GET",
-            "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:form.username}}&roomId={{url:roomId}}",
-            "headers": {
-              "User-Agent": "Mozilla/5.0"
-            },
-            "businessErrorRule": {
-              "jsonPath": "code",
-              "successValues": [
-                "1"
-              ],
-              "messagePath": "message",
-              "defaultMessage": "余电接口校验失败，请确认该学号已在智慧江财绑定寝室"
+              "defaultMessage": "该学号与所选房间未绑定，请先在微信「智慧江财」电费小程序绑定一次"
             },
             "extractVars": {
               "roomNo": "{{res.result.roomNo}}",
@@ -102,20 +169,27 @@
         ],
         "saveFormKeys": [
           "username",
+          "campusId",
+          "campusId.label",
+          "buildingId",
+          "buildingId.label",
+          "floorId",
+          "floorId.label",
+          "roomId",
+          "roomId.label",
           "roomName",
           "alert_threshold"
         ],
         "extractToStorage": {
-          "userId": "{{userId}}",
-          "roomId": "{{roomId}}",
-          "longName": "{{longName}}",
-          "campus": "{{campus}}",
-          "buildingName": "{{buildingName}}",
-          "floorName": "{{floorName}}",
+          "campus": "{{form.campusId.label}}",
+          "buildingName": "{{form.buildingId.label}}",
+          "floorName": "{{form.floorId.label}}",
+          "doorNo": "{{form.roomId.label}}",
+          "longName": "{{form.campusId.label}}{{form.buildingId.label}}{{form.floorId.label}}{{form.roomId.label}}",
           "roomNo": "{{res.result.roomNo|roomNo}}",
           "unit": "{{res.result.unit|unit}}"
         },
-        "successMessage": "已自动匹配寝室并完成绑定"
+        "successMessage": "已校验并添加该寝室"
       }
     }
   ],
@@ -157,7 +231,7 @@
   "glances": {
     "jufe_electricity_card": {
       "requiresGroupId": "room",
-      "unboundSub": "只需输入学号，自动匹配默认寝室",
+      "unboundSub": "填学号并点选楼栋房间，无需手填编号",
       "request": {
         "method": "GET",
         "url": "https://wxcourse.jxufe.cn/electricity_charges/api/charges/findRoomBalance?username={{url:storage.username}}&roomId={{url:storage.roomId}}",
@@ -222,7 +296,7 @@
         "commandId": "profile.add",
         "style": "PRIMARY"
       },
-      "note": "数据直连江财官方微信缴费接口（wxcourse.jxufe.cn / wxcourse.jxufe.edu.cn），全链路只读、无需密码；点击列表任意寝室可设默认、改备注或删除。",
+      "note": "数据直连江财官方微信缴费接口（wxcourse.jxufe.cn），全链路只读、无需密码与代理；点击列表任意寝室可设默认、改备注或删除。",
       "steps": [
         {
           "method": "GET",

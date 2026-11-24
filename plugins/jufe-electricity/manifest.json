@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "cn.edu.campus.jufe.electricity",
   "name": "江财寝室电费",
-  "version": "1.1.0",
-  "versionCode": 2,
-  "description": "江财官方直连 · 仅填学号自动匹配寝室 · 多寝室只读管理与低电预警",
+  "version": "1.1.1",
+  "versionCode": 3,
+  "description": "江财官方直连 · 校区/楼栋/楼层/房间级联选房 · 多寝室只读管理与低电预警",
   "iconGlyph": "电",
   "accent": "SCORE",
   "category": "utility",
@@ -12,7 +12,7 @@
   "schools": [
     "江西财经大学"
   ],
-  "changelog": "1. 仅输入学号自动匹配已绑定寝室，告别手动查房间 ID；2. 支持多寝室只读管理与首页下拉快切；3. 默认 5 度低电量通知/闹钟预警与后台巡检；4. 充值记录转北京时间并优化金额与概况页展示。",
+  "changelog": "1. 修复此前只输学号报「获取用户失败」，改为与官方小程序一致的「学号 + 校区/楼栋/楼层/房间号」四级点选自动匹配房间 ID；2. 精简域名白名单仅留 wxcourse.jxufe.cn，彻底无需密码与代理；3. 保留多寝室只读管理、默认 5 度通知/闹钟预警与北京时间流水。",
   "runtime": "dsl-v1",
   "hostApiMin": 1,
   "hostApiMax": 1,
@@ -24,19 +24,19 @@
     "runtime.dsl.v1",
     "dsl.steps.v1",
     "dsl.profiles.v1",
-    "alert.threshold.v1"
+    "alert.threshold.v1",
+    "dsl.options.v1"
   ],
   "allowedHosts": [
-    "wxcourse.jxufe.cn",
-    "wxcourse.jxufe.edu.cn"
+    "wxcourse.jxufe.cn"
   ],
   "permissions": [
-    "直连 wxcourse.jxufe.cn / wxcourse.jxufe.edu.cn（HTTPS 只读查询）",
+    "直连 wxcourse.jxufe.cn（HTTPS 只读查询）",
     "本地加密保存学号与多寝室档案",
     "低电量通知栏或系统闹钟提醒（可选）"
   ],
   "capabilities": [
-    "仅填学号自动匹配已绑定寝室",
+    "学号 + 四级点选（校区/楼栋/楼层/房号）自动映射电表",
     "多寝室只读管理与首页下拉切换",
     "低电量阈值预警（通知 / 闹钟 / 定时巡检）",
     "详情页多维概况与北京时间充值流水"
